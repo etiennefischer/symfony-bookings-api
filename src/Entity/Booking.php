@@ -13,11 +13,15 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 #[ORM\Entity(repositoryClass: BookingRepository::class)]
 #[UniqueEntity(
     fields: ['bookedAt', 'spot'],
-    message: 'Spot already booked or unavailable for this date',
+    message: 'Spot unavailable for this date',
 )]
 #[UniqueEntity(
     fields: ['bookedAt', 'customer'],
     message: 'Customer already booked for this date',
+)]
+#[UniqueEntity(
+    fields: ['weekNumber', 'customer'],
+    message: 'Customer already booked for this week',
 )]
 
 #[ApiResource]
@@ -31,7 +35,11 @@ class Booking
 
     #[ORM\Column(type: 'datetime')]
     #[Assert\GreaterThan('today'), NotBlank]
-    private $bookedAt;
+    public ?\DateTimeInterface $bookedAt;
+
+    #[ORM\Column(type: 'integer')]
+    private ?int $weekNumber;
+
 
     #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'bookings')]
     #[ORM\JoinColumn(nullable: false)]
@@ -42,6 +50,12 @@ class Booking
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank]
     private $spot;
+
+    public function __construct()
+    {
+        $this->weekNumber = 0;
+
+    }
 
 
     public function getId(): ?int
@@ -59,6 +73,19 @@ class Booking
         $this->bookedAt = $bookedAt;
 
         return $this;
+    }
+
+    public function getWeekNumber(): ?int
+    {
+        return $this->weekNumber;
+    }
+
+
+    public function setWeekNumber(?int $weekNumber): self
+    {
+       $this->weekNumber = $weekNumber;
+
+       return $this;
     }
 
     public function getCustomer(): ?Customer
